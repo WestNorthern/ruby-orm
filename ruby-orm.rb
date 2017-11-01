@@ -1,7 +1,7 @@
 jims_name = `sqlite3 orm_test.db "SELECT * FROM users WHERE id = 2;"`
 jonis_name = `sqlite3 orm_test.db "SELECT * FROM users WHERE id = 3;"`
-columns = `sqlite3 orm_test.db "PRAGMA table_info(users)"`
-users = `sqlite3 orm_test.db "SELECT * FROM users"`
+columns = `sqlite3 orm_test.db "PRAGMA table_info(users)";`
+users = `sqlite3 orm_test.db "SELECT * FROM users";`
 
 
 # col_str = columns.split("\n")
@@ -43,8 +43,7 @@ class User
   end
 
   def self.display_users
-  	users = `sqlite3 orm_test.db "SELECT * FROM users;"`
-  	puts users
+  	puts `sqlite3 orm_test.db "SELECT * FROM users;"`
   end
 
   def set_user(fn, ln)
@@ -56,21 +55,42 @@ class User
   def save
   	# Change this method so that if there is an id, save it. Otherwise INSERT INTO
 
-  	
-  	i_vars = self.instance_variables.map { |x| x.to_s.tr('@', '') }
-  	i_var_vals = self.instance_variables.map { |x| instance_variable_get(x)}
+  	if defined? @id
 
-  	trans_arr = []
+	  	i_vars = self.instance_variables.map { |x| x.to_s.tr('@', '') }
+	  	i_var_vals = self.instance_variables.map { |x| instance_variable_get(x)}
 
-  	i_vars.each_with_index do |x, i|
-  		trans_arr.push("#{i_vars[i]} = '#{i_var_vals[i]}', ")
-  	end
-  	
-  	set_string = trans_arr.join('').chomp(', ').to_s
+	  	trans_arr = []
 
-  	# UPDATE users SET #{set_string} WHERE id = #{set_num};
+	  	i_vars.each_with_index do |x, i|
+	  		trans_arr.push("#{i_vars[i]} = '#{i_var_vals[i]}', ")
+	  	end
+	  	
+	  	set_string = trans_arr.join('').chomp(', ').to_s
 
-  	`sqlite3 orm_test.db "UPDATE users SET #{set_string} WHERE id = #{@id};"`
+	  	# UPDATE users SET #{set_string} WHERE id = #{set_num};
+
+	  	`sqlite3 orm_test.db "UPDATE users SET #{set_string} WHERE id = '#{@id}';"`
+	  else
+	  	insert_keys = self.instance_variables.map { |x| x.to_s.tr('@', '') }
+	  	insert_vals = self.instance_variables.map { |x| instance_variable_get(x)}
+
+	  	key_arr = []
+	  	insert_keys.each_with_index do |x, i|
+	  		key_arr.push("#{insert_keys[i]}, ")
+	  	end
+
+	  	key_str = key_arr.join('').chomp(', ').to_s
+
+	  	val_arr = []
+	  	insert_vals.each_with_index do |x, i|
+	  		val_arr.push("'#{insert_vals[i]}', ")
+	  	end
+
+	  	val_str = val_arr.join('').chomp(', ').to_s
+
+	  	`sqlite3 orm_test.db "INSERT INTO users (#{key_str}) VALUES (#{val_str});"`
+	  end
 
 
   end
@@ -86,24 +106,13 @@ class User
 
 end
 
-p User.new(first_name: 'ryan', last_name: 'arthur')
+# test_two = User.new(first_name: 'major', last_name: 'lazer')
 
-test_one = User.find(2)
-
-# puts test_one.first_name
-
-# p User.find(2)
-
-
-# puts User.display_users
-
-# user.first_name = 'asf'
-
-test_two = User.find(3)
+test_two = User.find(5)
 
 test_two.save
 
-test_two.destroy
+# test_two.destroy
 
 User.display_users
 
